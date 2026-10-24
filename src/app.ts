@@ -1,6 +1,6 @@
 import * as v from "valibot"
 import { Hono } from "hono"
-import { fileTtlMs, maxFileSizeBytes, type Config } from "./config.js"
+import { fileTtlMs, maxFileSizeBytes, maxTotalStorageBytes, type Config } from "./config.js"
 import {
   importHmacKey,
   importRsaPublicKey,
@@ -162,6 +162,16 @@ export async function createApp(ctx: AppContext) {
     if (!checked.ok) {
       log("upload.rejected", { sessionId, fileId, reason: checked.reason, fileName: clientName })
       return c.json({ error: { code: "files.disallowed-type", reason: checked.reason } }, { status: 415 })
+    }
+
+    // Global storage quota: total bytes across ALL sessions (not per-session).
+    // Checked before the blob is stored, so rejected uploads leave no orphan.
+    // Residual race: two concurrent uploads can both pass the check before
+    // either inserts; see README. Deletes/purges/TTL lower the total via the index.
+    const quotaBytes = maxTotalStorageBytes(config)
+    if (quotaBytes > 0 && index.totalBytes() + bytes.length > quotaBytes) {
+      log("upload.rejected", { sessionId, fileId, reason: "storage-quota", size: bytes.length })
+      return c.json({ error: { code: "files.storage-quota", quotaBytes } }, { status: 507 })
     }
 
     const now = ctx.now()

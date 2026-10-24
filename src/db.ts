@@ -23,6 +23,8 @@ export interface FileIndex {
   deleteSession(sessionId: string): FileRow[]
   /** Delete rows with expires_at <= now. Returns the removed rows (for blob cleanup). */
   deleteExpired(now: number): FileRow[]
+  /** Total stored bytes across ALL sessions (basis for the global storage quota). */
+  totalBytes(): number
   close(): void
 }
 
@@ -58,6 +60,7 @@ export function openFileIndex(path: string): FileIndex {
   const sessionRowsStmt = db.prepare("SELECT * FROM files WHERE session_id = ?")
   const sessionDeleteStmt = db.prepare("DELETE FROM files WHERE session_id = ?")
   const expiredRowsStmt = db.prepare("SELECT * FROM files WHERE expires_at <= ?")
+  const totalBytesStmt = db.prepare("SELECT COALESCE(SUM(size), 0) AS total FROM files")
   const expiredDeleteStmt = db.prepare("DELETE FROM files WHERE expires_at <= ?")
 
   return {
@@ -85,6 +88,9 @@ export function openFileIndex(path: string): FileIndex {
       const rows = sessionRowsStmt.all(sessionId) as FileRow[]
       if (rows.length > 0) sessionDeleteStmt.run(sessionId)
       return rows
+    },
+    totalBytes() {
+      return (totalBytesStmt.get() as { total: number }).total
     },
     deleteExpired(now) {
       const rows = expiredRowsStmt.all(now) as FileRow[]

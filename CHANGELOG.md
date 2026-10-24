@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- New `MAX_TOTAL_STORAGE_GB` env (default `0` = unlimited): global quota
+  over total stored bytes across all sessions. Over-quota uploads are
+  rejected with HTTP 507 `files.storage-quota` (logged as
+  `upload.rejected` with `reason: storage-quota`); deletes, room purges,
+  and TTL expiry free quota. The check-then-insert has a residual race
+  under concurrent uploads (documented in README).
 - New `ALLOW_ALL_FILE_TYPES` env flag (default `false`): when enabled
   (`1`/`true`), upload validation accepts every file type — extension
   allowlist, blocked extensions, executable magic-byte rejection, and

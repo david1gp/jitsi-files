@@ -62,6 +62,13 @@ const ConfigSchema = v.object({
    * default for other self-hosters).
    */
   ALLOW_ALL_FILE_TYPES: BoolFromEnv,
+  /**
+   * Global storage quota in gigabytes (fractional values allowed, so tests
+   * can set a tiny quota). 0 or unset = unlimited (public default).
+   * Uploads that would push total stored bytes (all sessions) over the
+   * quota are rejected with 507 `files.storage-quota`.
+   */
+  MAX_TOTAL_STORAGE_GB: NumFromEnv(0),
 
   // --- Lifecycle ---
   /** Fallback expiry for files when the room-destroyed hook never fires. Hours. */
@@ -99,6 +106,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     PRESIGNED_URL_TTL_SECONDS: env["PRESIGNED_URL_TTL_SECONDS"],
     MAX_FILE_SIZE_MB: env["MAX_FILE_SIZE_MB"],
     ALLOW_ALL_FILE_TYPES: env["ALLOW_ALL_FILE_TYPES"],
+    MAX_TOTAL_STORAGE_GB: env["MAX_TOTAL_STORAGE_GB"],
     FILE_TTL_HOURS: env["FILE_TTL_HOURS"],
     SWEEP_INTERVAL_MINUTES: env["SWEEP_INTERVAL_MINUTES"],
     INTERNAL_PURGE_TOKEN: env["INTERNAL_PURGE_TOKEN"],
@@ -107,6 +115,10 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
 
 export function maxFileSizeBytes(config: Config): number {
   return Math.floor(config.MAX_FILE_SIZE_MB * 1024 * 1024)
+}
+
+export function maxTotalStorageBytes(config: Config): number {
+  return Math.floor(config.MAX_TOTAL_STORAGE_GB * 1024 * 1024 * 1024)
 }
 
 export function fileTtlMs(config: Config): number {

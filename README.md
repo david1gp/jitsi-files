@@ -59,6 +59,7 @@ Env only — see [.env.example](./.env.example) (complete). Key decisions:
 | `S3_ENDPOINT` / `S3_BUCKET` / `S3_ACCESS_KEY` / `S3_SECRET_KEY` | —                                              | S3-compatible backend (`S3_FORCE_PATH_STYLE=true` suits MinIO/B2/R2)                              |
 | `PRESIGNED_URL_TTL_SECONDS`                                     | `10800` (3h)                                   | S3 presigned download-URL lifetime                                                                |
 | `MAX_FILE_SIZE_MB`                                              | `10`                                           | Server-side upload cap, enforced for every upload                                                 |
+| `MAX_TOTAL_STORAGE_GB`                                      | `0` (unlimited)                                | Global quota over all sessions; over-quota uploads get 507 `files.storage-quota`                  |
 | `ALLOW_ALL_FILE_TYPES`                                      | `false`                                        | Accept every file type (skip allowlist + content sniffing). Staff-only use; downloads stay `attachment` + `nosniff` |
 | `FILE_TTL_HOURS`                                                | `24`                                           | Fallback expiry when the room-destroyed hook never fires                                          |
 | `SWEEP_INTERVAL_MINUTES`                                        | `15`                                           | How often expired blobs + index rows are deleted                                                  |
@@ -84,7 +85,14 @@ is served as an alias, so both `apiUrl=https://files.example.com` and
 
 Error bodies are `{error: {code}}` with codes like `auth.invalid-token`,
 `auth.session-mismatch`, `files.too-large` (413), `files.disallowed-type`
-(415), `files.not-found` (404), `purge.unauthorized` (401).
+(415), `files.storage-quota` (507), `files.not-found` (404),
+`purge.unauthorized` (401).
+
+Storage quota notes: the quota is global (summed over the SQLite index
+across all sessions), so deletes, room purges, and TTL expiry free quota
+automatically. The sum-check and the insert are separate statements, so two
+uploads racing each other can both pass the check and jointly overshoot the
+quota; for a staff-only meeting service this residual race is acceptable.
 
 ## Jitsi wiring
 
