@@ -156,7 +156,9 @@ export async function createApp(ctx: AppContext) {
       log("upload.rejected", { sessionId, fileId, reason: "too large", size: bytes.length })
       return c.json({ error: { code: "files.too-large", maxBytes: maxFileSizeBytes(config) } }, { status: 413 })
     }
-    const checked = validateUpload(clientName, filePart.type, bytes)
+    const checked = validateUpload(clientName, filePart.type, bytes, {
+      allowAllFileTypes: config.ALLOW_ALL_FILE_TYPES,
+    })
     if (!checked.ok) {
       log("upload.rejected", { sessionId, fileId, reason: checked.reason, fileName: clientName })
       return c.json({ error: { code: "files.disallowed-type", reason: checked.reason } }, { status: 415 })

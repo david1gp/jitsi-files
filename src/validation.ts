@@ -123,8 +123,25 @@ function hasScriptContent(bytes: Uint8Array): boolean {
 
 export type ValidationResult = { ok: true; extension: string } | { ok: false; reason: string }
 
-export function validateUpload(fileName: string, mimeType: string, bytes: Uint8Array): ValidationResult {
+export interface ValidationOptions {
+  /**
+   * When true, accept every file type: skip the extension allowlist,
+   * BLOCKED_EXTENSIONS, executable magic-byte rejection, and
+   * markup/script sniffing. Basic safety stays in the HTTP layer
+   * regardless (auth, size cap, attachment disposition, nosniff,
+   * filename sanitization). Default false.
+   */
+  allowAllFileTypes?: boolean
+}
+
+export function validateUpload(
+  fileName: string,
+  mimeType: string,
+  bytes: Uint8Array,
+  options: ValidationOptions = {},
+): ValidationResult {
   const extension = fileExtension(fileName)
+  if (options.allowAllFileTypes) return { ok: true, extension }
   if (extension === "") return { ok: false, reason: "missing file extension" }
   if (BLOCKED_EXTENSIONS.has(extension)) return { ok: false, reason: `file type .${extension} is not allowed` }
   const allowedMimes = ALLOWED[extension]

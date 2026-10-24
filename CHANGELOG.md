@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- New `ALLOW_ALL_FILE_TYPES` env flag (default `false`): when enabled
+  (`1`/`true`), upload validation accepts every file type — extension
+  allowlist, blocked extensions, executable magic-byte rejection, and
+  markup/script sniffing are all skipped (including `.exe`, `.html`,
+  script-carrying `.svg`, unknown or missing extensions). Auth, the
+  `MAX_FILE_SIZE_MB` cap, `attachment` downloads with `nosniff`, and
+  filename sanitization stay enforced regardless.
+
 - Allow `.svg` image uploads (`image/svg+xml`): real meeting users share SVG
   logos/seals/diagrams and the blanket block turned those shares into a
   generic "Upload failed" (HTTP 415 `files.disallowed-type`). Downloads stay

@@ -55,6 +55,13 @@ const ConfigSchema = v.object({
 
   // --- Limits ---
   MAX_FILE_SIZE_MB: NumFromEnv(10),
+  /**
+   * When true, accept every upload file type (skip extension allowlist,
+   * blocked extensions, executable magic-byte and markup/script checks).
+   * Staff-only deployments may enable this; default false (responsible
+   * default for other self-hosters).
+   */
+  ALLOW_ALL_FILE_TYPES: BoolFromEnv,
 
   // --- Lifecycle ---
   /** Fallback expiry for files when the room-destroyed hook never fires. Hours. */
@@ -91,6 +98,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     S3_PREFIX: env["S3_PREFIX"],
     PRESIGNED_URL_TTL_SECONDS: env["PRESIGNED_URL_TTL_SECONDS"],
     MAX_FILE_SIZE_MB: env["MAX_FILE_SIZE_MB"],
+    ALLOW_ALL_FILE_TYPES: env["ALLOW_ALL_FILE_TYPES"],
     FILE_TTL_HOURS: env["FILE_TTL_HOURS"],
     SWEEP_INTERVAL_MINUTES: env["SWEEP_INTERVAL_MINUTES"],
     INTERNAL_PURGE_TOKEN: env["INTERNAL_PURGE_TOKEN"],
