@@ -1,0 +1,85 @@
+{
+  "name": "@adaptive-ds/jitsi-files",
+  "version": "0.1.0",
+  "description": "Self-hostable file-sharing backend for Jitsi Meet config.fileSharing. Drop-in HTTP service with Prosody short-lived JWT auth, persistent index, TTL + room-purge lifecycle.",
+  "keywords": [
+    "jitsi",
+    "jitsi-meet",
+    "file-sharing",
+    "prosody",
+    "webrtc",
+    "self-hosted",
+    "hono",
+    "sqlite",
+    "typescript",
+    "bun",
+    "adaptive-ds"
+  ],
+  "homepage": "https://github.com/david1gp/jitsi-files",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/david1gp/jitsi-files.git"
+  },
+  "bugs": {
+    "url": "https://github.com/david1gp/jitsi-files/issues"
+  },
+  "author": {
+    "name": "David Siewert",
+    "url": "https://david-siewert.com/"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/sponsors/david1gp"
+  },
+  "license": "MIT",
+  "readme": "README.md",
+  "type": "module",
+  "private": false,
+  "sideEffects": false,
+  "main": "./dist/server.js",
+  "types": "./dist/server.d.ts",
+  "bin": {
+    "jitsi-files": "./dist/server.js"
+  },
+  "engines": {
+    "node": ">=22",
+    "bun": ">=1.3.0"
+  },
+  "scripts": {
+    "dev": "bun run src/server.ts",
+    "start": "bun run dist/server.js",
+    "test": "bun test",
+    "test:w": "bun test --watch",
+    "typecheck": "tsc --noEmit -p ./tsconfig.json",
+    "build": "rm -rf ./dist && bun build ./src/server.ts --outfile ./dist/server.js --target bun --format esm",
+    "format": "biome format --write src test package.json tsconfig.json biome.json README.md",
+    "format:check": "biome format src test package.json tsconfig.json biome.json README.md",
+    "smoke": "bash ./ops/smoke.sh"
+  },
+  "dependencies": {
+    "hono": "^4.13.13",
+    "valibot": "^1.5.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.2",
+    "@types/bun": "^1.4.4",
+    "typescript": "^6.0.3"
+  },
+  "prettier": {
+    "semi": false,
+    "printWidth": 120,
+    "trailingComma": "all"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
+}

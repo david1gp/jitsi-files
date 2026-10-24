@@ -1,0 +1,70 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Bun package managers
+bun.lock
+bun.lockb
+
+# Output
+out
+dist
+*.tgz
+/build/
+
+# Code coverage
+coverage
+*.lcov
+
+# Logs
+logs
+_.log
+report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+
+# Finder (MacOS) folder config
+.DS_Store
+
+# Dotenv secrets
+.env
+.env.*
+!/.env.example
+
+# Cache
+.eslintcache
+.cache
+*.tsbuildinfo
+/build/
+
+# IntelliJ based IDEs
+.gradle
+*.iml
+.idea
+
+# Package manager debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Ignore package manager lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# vscode
+.vscode
+*.code-workspace
+
+# Data (runtime uploads + sqlite index; must survive restarts, never commit)
+data
+*.sqlite
+*.sqlite-*
+
+# Keys (never commit test or real keys)
+/keys
+*.pem
+*.key
+
+# npm publishing
+.npmrc
