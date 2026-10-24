@@ -154,9 +154,11 @@ delays cleanup but never leaks storage permanently.
 - Short-lived tokens are verified for signature (RS256), issuer, audience,
   expiry/nbf (±60s skew), and `meeting_id` ↔ URL session binding.
 - Uploads are capped (`MAX_FILE_SIZE_MB`, default 10MB), restricted to a
-  document/image/media/zip allowlist, and screened for executable magic bytes
-  (MZ/ELF/Mach-O/shebang) and markup payloads. No `.html/.svg/.js` or
-  executables, ever. Downloads are always `attachment`.
+  document/image/media/zip allowlist (`.svg` images included — meeting users
+  share logos/seals/diagrams), and screened for executable magic bytes
+  (MZ/ELF/Mach-O/shebang) and markup payloads. No `.html/.js` or executables,
+  ever; SVGs with embedded `<script>` are rejected. Downloads are always
+  `attachment` + `nosniff`.
 - Structured logs carry ids, sizes, and reasons — never file contents, tokens,
   or secrets.
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Allow `.svg` image uploads (`image/svg+xml`): real meeting users share SVG
+  logos/seals/diagrams and the blanket block turned those shares into a
+  generic "Upload failed" (HTTP 415 `files.disallowed-type`). Downloads stay
+  `Content-Disposition: attachment` (now plus `nosniff`), SVGs with embedded
+  `<script>` are rejected, and SVG markup behind any other extension is still
+  rejected.
+- Download responses now send `X-Content-Type-Options: nosniff`.
+
 ## 0.1.0 — initial public release
 
 - Jitsi Meet `config.fileSharing` backend: `POST /sessions/:id/files`

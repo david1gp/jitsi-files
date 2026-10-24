@@ -1,10 +1,13 @@
 /**
  * Upload validation: extension allowlist + executable magic-byte rejection.
  *
- * HTML/SVG/script and executables are never allowed (stored files are served
- * with `Content-Disposition: attachment`, but stored XSS / drive-by content is
- * still rejected at the gate). Magic-byte screening catches executables that
- * were renamed to an allowed extension.
+ * HTML/script and executables are never allowed. SVG images ARE allowed:
+ * meeting users routinely share .svg logos/seals/diagrams, and stored files
+ * are served with `Content-Disposition: attachment` (plus `nosniff`), so a
+ * downloaded SVG never executes in the service origin. SVGs with embedded
+ * `<script>` are still rejected, as is SVG markup hiding behind any other
+ * allowed extension. Magic-byte screening catches executables that were
+ * renamed to an allowed extension.
  */
 
 const ALLOWED: Record<string, string[]> = {
@@ -26,6 +29,7 @@ const ALLOWED: Record<string, string[]> = {
   jpeg: ["image/jpeg"],
   gif: ["image/gif"],
   webp: ["image/webp"],
+  svg: ["image/svg+xml"],
   mp3: ["audio/mpeg"],
   wav: ["audio/wav", "audio/x-wav"],
   ogg: ["audio/ogg"],
@@ -41,7 +45,6 @@ const BLOCKED_EXTENSIONS = new Set([
   "html",
   "htm",
   "xhtml",
-  "svg",
   "js",
   "mjs",
   "cjs",
@@ -98,15 +101,24 @@ function hasExecutableMagic(bytes: Uint8Array): boolean {
 }
 
 /** Sniff for HTML/script payloads hiding behind an allowed extension. */
-function hasMarkupMagic(bytes: Uint8Array): boolean {
+function hasMarkupMagic(bytes: Uint8Array, extension: string): boolean {
   const head = new TextDecoder("utf-8", { fatal: false }).decode(bytes.slice(0, 512)).trimStart().toLowerCase()
-  return (
+  if (
     head.startsWith("<!doctype html") ||
     head.startsWith("<html") ||
     head.startsWith("<script") ||
-    head.startsWith("<svg") ||
     head.startsWith("<?php")
-  )
+  ) {
+    return true
+  }
+  // SVG markup is expected in genuine .svg files, but must not smuggle itself
+  // in behind any other allowed extension.
+  return extension !== "svg" && head.startsWith("<svg")
+}
+
+/** Reject SVGs carrying embedded script (defense in depth: downloads are attachment-dispositioned). */
+function hasScriptContent(bytes: Uint8Array): boolean {
+  return new TextDecoder("utf-8", { fatal: false }).decode(bytes).toLowerCase().includes("<script")
 }
 
 export type ValidationResult = { ok: true; extension: string } | { ok: false; reason: string }
@@ -122,7 +134,8 @@ export function validateUpload(fileName: string, mimeType: string, bytes: Uint8A
     return { ok: false, reason: `MIME type ${mimeType} does not match .${extension}` }
   }
   if (hasExecutableMagic(bytes)) return { ok: false, reason: "executable content detected" }
-  if (hasMarkupMagic(bytes)) return { ok: false, reason: "markup/script content detected" }
+  if (extension === "svg" && hasScriptContent(bytes)) return { ok: false, reason: "script content detected" }
+  if (hasMarkupMagic(bytes, extension)) return { ok: false, reason: "markup/script content detected" }
   return { ok: true, extension }
 }
 

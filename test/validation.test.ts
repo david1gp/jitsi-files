@@ -22,6 +22,7 @@ describe("upload validation", () => {
       "i.png",
       "j.jpg",
       "k.webp",
+      "k2.svg",
       "l.mp3",
       "m.mp4",
       "n.zip",
@@ -42,7 +43,6 @@ describe("upload validation", () => {
       "x.js",
       "x.html",
       "x.htm",
-      "x.svg",
       "x.jar",
       "x.apk",
       "x.com",
@@ -65,6 +65,24 @@ describe("upload validation", () => {
 
   test("rejects MIME types that do not match the extension", () => {
     const result = validateUpload("a.pdf", "application/x-msdownload", new TextEncoder().encode("data"))
+    expect(result.ok).toBe(false)
+  })
+
+  test("accepts benign SVG images (meeting users share .svg logos/seals)", () => {
+    const benign =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><circle cx="60" cy="60" r="56"/></svg>'
+    const result = validateUpload("siegel-made-in-germany.svg", "image/svg+xml", new TextEncoder().encode(benign))
+    expect(result.ok).toBe(true)
+  })
+
+  test("rejects SVG files with embedded script", () => {
+    const evil = '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
+    const result = validateUpload("evil.svg", "image/svg+xml", new TextEncoder().encode(evil))
+    expect(result.ok).toBe(false)
+  })
+
+  test("still rejects SVG markup hiding behind another allowed extension", () => {
+    const result = validateUpload("evil.txt", "text/plain", new TextEncoder().encode('<svg onload="alert(1)">'))
     expect(result.ok).toBe(false)
   })
 })
@@ -90,7 +108,7 @@ describe("HTTP enforcement", () => {
       for (const [name, mime, content] of [
         ["evil.exe", "application/octet-stream", "MZ..."],
         ["page.html", "text/html", "<html></html>"],
-        ["pic.svg", "image/svg+xml", "<svg></svg>"],
+        ["evil.js", "text/javascript", "alert(1)"],
       ] as const) {
         const res = await server.app.request("/sessions/type-session/files", {
           method: "POST",
@@ -103,6 +121,24 @@ describe("HTTP enforcement", () => {
       forged.set("file", new File([EXE.buffer as ArrayBuffer], "forged.pdf", { type: "application/pdf" }))
       const forgedRes = await server.app.request("/sessions/type-session/files", { method: "POST", body: forged })
       expect(forgedRes.status).toBe(415)
+    } finally {
+      await server.cleanup()
+    }
+  })
+
+  test("SVG images shared by meeting users are accepted (regression)", async () => {
+    const server = await makeTestServer()
+    try {
+      const res = await server.app.request("/sessions/svg-session/files", {
+        method: "POST",
+        body: uploadForm(
+          "siegel-made-in-germany.svg",
+          '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><circle cx="60" cy="60" r="56"/></svg>',
+          "image/svg+xml",
+          "svg-1",
+        ),
+      })
+      expect(res.status).toBe(200)
     } finally {
       await server.cleanup()
     }

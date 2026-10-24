@@ -116,6 +116,7 @@ export async function createApp(ctx: AppContext) {
       headers: {
         "content-type": row.content_type,
         "content-disposition": `attachment; filename="${encodeURIComponent(row.file_name)}"`,
+        "x-content-type-options": "nosniff",
         "cache-control": "private, max-age=60",
       },
     })
