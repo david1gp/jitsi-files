@@ -41,10 +41,6 @@
   "bin": {
     "jitsi-files": "./dist/server.js"
   },
-  "engines": {
-    "node": ">=22",
-    "bun": ">=1.3.0"
-  },
   "scripts": {
     "dev": "bun run src/server.ts",
     "start": "bun run dist/server.js",
