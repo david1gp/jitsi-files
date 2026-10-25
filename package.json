@@ -1,6 +1,6 @@
 {
   "name": "@adaptive-ds/jitsi-files",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Self-hostable file-sharing backend for Jitsi Meet config.fileSharing. Drop-in HTTP service with Prosody short-lived JWT auth, persistent index, TTL + room-purge lifecycle.",
   "keywords": [
     "jitsi",
@@ -32,14 +32,12 @@
     "url": "https://github.com/sponsors/david1gp"
   },
   "license": "MIT",
-  "readme": "README.md",
   "type": "module",
   "private": false,
   "sideEffects": false,
-  "main": "./dist/server.js",
-  "types": "./dist/server.d.ts",
+  "main": "dist/server.js",
   "bin": {
-    "jitsi-files": "./dist/server.js"
+    "jitsi-files": "dist/server.js"
   },
   "scripts": {
     "dev": "bun run src/server.ts",
@@ -47,7 +45,7 @@
     "test": "bun test",
     "test:w": "bun test --watch",
     "typecheck": "tsc --noEmit -p ./tsconfig.json",
-    "build": "rm -rf ./dist && bun build ./src/server.ts --outfile ./dist/server.js --target bun --format esm",
+    "build": "rm -rf ./dist && bun build ./src/server.ts --outfile ./dist/server.js --target bun --format esm && chmod +x ./dist/server.js",
     "format": "biome format --write src test package.json tsconfig.json biome.json README.md",
     "format:check": "biome format src test package.json tsconfig.json biome.json README.md",
     "smoke": "bash ./ops/smoke.sh"
@@ -68,7 +66,6 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/server.d.ts",
       "import": "./dist/server.js"
     },
     "./package.json": "./package.json"

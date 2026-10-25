@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 import { createApp, sweepExpired, type AppContext } from "./app.js"
 import { loadConfig } from "./config.js"
 import { importHmacKey } from "./crypto.js"

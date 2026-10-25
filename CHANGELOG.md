@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.1
 
 - Removed upload file-type validation entirely: every file type is now
   accepted (no extension allowlist, blocked extensions, executable
