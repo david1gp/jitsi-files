@@ -126,6 +126,59 @@ describe("file upload / list / get / download / delete roundtrip", () => {
     }
   })
 
+  test("accepts any file type with no type validation", async () => {
+    const server = await makeTestServer()
+    try {
+      const cases: Array<[string, string | Uint8Array, string]> = [
+        ["tool.exe", new Uint8Array([0x4d, 0x5a, 0x90, 0x00]), "application/octet-stream"],
+        ["page.html", "<!DOCTYPE html><html><body>hi</body></html>", "text/html"],
+        ["evil.js", "alert(1)", "text/javascript"],
+        ["evil.svg", '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>', "image/svg+xml"],
+        ["file-no-ext", "data", "application/octet-stream"],
+      ]
+      let n = 0
+      for (const [name, content, mime] of cases) {
+        n += 1
+        const res = await server.app.request("/sessions/any-type/files", {
+          method: "POST",
+          body: uploadForm(name, content, mime, `any-${n}`),
+        })
+        expect(res.status).toBe(200)
+      }
+    } finally {
+      await server.cleanup()
+    }
+  })
+
+  test("oversize uploads are rejected with 413", async () => {
+    const server = await makeTestServer({ MAX_FILE_SIZE_MB: "1" })
+    try {
+      const big = new Uint8Array(2 * 1024 * 1024).fill(0x61)
+      const form = new FormData()
+      form.set("metadata", JSON.stringify({ fileId: "big-1", fileName: "big.pdf" }))
+      form.set("file", new File([big.buffer as ArrayBuffer], "big.pdf", { type: "application/pdf" }))
+      const res = await server.app.request("/sessions/size-session/files", { method: "POST", body: form })
+      expect(res.status).toBe(413)
+    } finally {
+      await server.cleanup()
+    }
+  })
+
+  test("missing parts and bad metadata are rejected with 400", async () => {
+    const server = await makeTestServer()
+    try {
+      const noFile = new FormData()
+      noFile.set("metadata", JSON.stringify({ fileId: "x" }))
+      expect((await server.app.request("/sessions/s/files", { method: "POST", body: noFile })).status).toBe(400)
+      const badMeta = new FormData()
+      badMeta.set("metadata", "not json")
+      badMeta.set("file", new File(["x"], "x.txt", { type: "text/plain" }))
+      expect((await server.app.request("/sessions/s/files", { method: "POST", body: badMeta })).status).toBe(400)
+    } finally {
+      await server.cleanup()
+    }
+  })
+
   test("moderator gate is off by default and enforced when enabled", async () => {
     const open = await makeTestServer({}, { enabled: true, sessionId: SESSION })
     try {
