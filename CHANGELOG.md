@@ -2,26 +2,17 @@
 
 ## Unreleased
 
+- Removed upload file-type validation entirely: every file type is now
+  accepted (no extension allowlist, blocked extensions, executable
+  magic-byte or markup/script checks, and no `ALLOW_ALL_FILE_TYPES` flag).
+  Auth, the `MAX_FILE_SIZE_MB` cap, `attachment` downloads with `nosniff`,
+  and filename handling stay enforced regardless.
 - New `MAX_TOTAL_STORAGE_GB` env (default `0` = unlimited): global quota
   over total stored bytes across all sessions. Over-quota uploads are
   rejected with HTTP 507 `files.storage-quota` (logged as
   `upload.rejected` with `reason: storage-quota`); deletes, room purges,
   and TTL expiry free quota. The check-then-insert has a residual race
   under concurrent uploads (documented in README).
-- New `ALLOW_ALL_FILE_TYPES` env flag (default `false`): when enabled
-  (`1`/`true`), upload validation accepts every file type — extension
-  allowlist, blocked extensions, executable magic-byte rejection, and
-  markup/script sniffing are all skipped (including `.exe`, `.html`,
-  script-carrying `.svg`, unknown or missing extensions). Auth, the
-  `MAX_FILE_SIZE_MB` cap, `attachment` downloads with `nosniff`, and
-  filename sanitization stay enforced regardless.
-
-- Allow `.svg` image uploads (`image/svg+xml`): real meeting users share SVG
-  logos/seals/diagrams and the blanket block turned those shares into a
-  generic "Upload failed" (HTTP 415 `files.disallowed-type`). Downloads stay
-  `Content-Disposition: attachment` (now plus `nosniff`), SVGs with embedded
-  `<script>` are rejected, and SVG markup behind any other extension is still
-  rejected.
 - Download responses now send `X-Content-Type-Options: nosniff`.
 
 ## 0.1.0 — initial public release

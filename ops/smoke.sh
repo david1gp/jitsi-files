@@ -41,7 +41,6 @@ echo "ok: list contains file"
 URL="$(echo "$LIST" | python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["presignedUrl"])')"
 check download "$(curl -s -o "$WORK/got.pdf" -w '%{http_code}' "http://127.0.0.1:$PORT$(python3 -c "from urllib.parse import urlparse; print(urlparse('$URL').path)")")" 200
 cmp "$WORK/doc.pdf" "$WORK/got.pdf" && echo "ok: download bytes identical"
-check exe-rejected "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BASE/sessions/$S/files" -F 'metadata={"fileId":"evil","fileName":"evil.exe"}' -F 'file=@/bin/true;type=application/octet-stream;filename=evil.exe')" 415
 check delete "$(curl -s -o /dev/null -w '%{http_code}' -X DELETE "$BASE/sessions/$S/files/$FID")" 200
 check purge-no-token "$(curl -s -o /dev/null -w '%{http_code}' -X DELETE "$BASE/sessions/$S")" 401
 check purge "$(curl -s -o /dev/null -w '%{http_code}' -X DELETE "$BASE/sessions/$S" -H 'x-internal-token: smoke-purge-token')" 200

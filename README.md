@@ -18,8 +18,7 @@ leaves the meeting-end lifecycle to the deployer. This service instead:
   sweeper fallback, so nothing accumulates when the hook never fires;
 - verifies Prosody short-lived JWTs (RS256, issuer/audience `file-sharing`)
   with meeting/token session scoping;
-- rejects executables and markup by extension **and** magic bytes, serves
-  everything as `attachment`.
+- accepts every file type, serves everything as `attachment`.
 
 ## Install
 
@@ -35,7 +34,7 @@ cp .env.example .env
 ```bash
 bun run dev      # run from source (Bun loads .env automatically)
 bun run start    # run the built output
-bun test         # bun tests (33 tests: auth, roundtrip, purge, TTL, validation, persistence, S3)
+bun test         # bun tests (auth, roundtrip, purge, TTL, persistence, S3)
 bun run typecheck
 bun run build    # emit dist/server.js
 bun run format   # biome
@@ -59,8 +58,7 @@ Env only — see [.env.example](./.env.example) (complete). Key decisions:
 | `S3_ENDPOINT` / `S3_BUCKET` / `S3_ACCESS_KEY` / `S3_SECRET_KEY` | —                                              | S3-compatible backend (`S3_FORCE_PATH_STYLE=true` suits MinIO/B2/R2)                              |
 | `PRESIGNED_URL_TTL_SECONDS`                                     | `10800` (3h)                                   | S3 presigned download-URL lifetime                                                                |
 | `MAX_FILE_SIZE_MB`                                              | `10`                                           | Server-side upload cap, enforced for every upload                                                 |
-| `MAX_TOTAL_STORAGE_GB`                                      | `0` (unlimited)                                | Global quota over all sessions; over-quota uploads get 507 `files.storage-quota`                  |
-| `ALLOW_ALL_FILE_TYPES`                                      | `false`                                        | Accept every file type (skip allowlist + content sniffing). Staff-only use; downloads stay `attachment` + `nosniff` |
+| `MAX_TOTAL_STORAGE_GB`                                          | `0` (unlimited)                                | Global quota over all sessions; over-quota uploads get 507 `files.storage-quota`                  |
 | `FILE_TTL_HOURS`                                                | `24`                                           | Fallback expiry when the room-destroyed hook never fires                                          |
 | `SWEEP_INTERVAL_MINUTES`                                        | `15`                                           | How often expired blobs + index rows are deleted                                                  |
 | `INTERNAL_PURGE_TOKEN`                                          | —                                              | Shared secret for `DELETE /sessions/:sessionId` (Prosody hook)                                    |
@@ -84,8 +82,8 @@ is served as an alias, so both `apiUrl=https://files.example.com` and
 | `DELETE` | `/sessions/:sessionId`               | `x-internal-token` | **room-purge hook**: deletes all blobs + index rows for a meeting                                                                |
 
 Error bodies are `{error: {code}}` with codes like `auth.invalid-token`,
-`auth.session-mismatch`, `files.too-large` (413), `files.disallowed-type`
-(415), `files.storage-quota` (507), `files.not-found` (404),
+`auth.session-mismatch`, `files.too-large` (413),
+`files.storage-quota` (507), `files.not-found` (404),
 `purge.unauthorized` (401).
 
 Storage quota notes: the quota is global (summed over the SQLite index
@@ -162,12 +160,8 @@ delays cleanup but never leaks storage permanently.
   must never be set in production.
 - Short-lived tokens are verified for signature (RS256), issuer, audience,
   expiry/nbf (±60s skew), and `meeting_id` ↔ URL session binding.
-- Uploads are capped (`MAX_FILE_SIZE_MB`, default 10MB), restricted to a
-  document/image/media/zip allowlist (`.svg` images included — meeting users
-  share logos/seals/diagrams), and screened for executable magic bytes
-  (MZ/ELF/Mach-O/shebang) and markup payloads. No `.html/.js` or executables,
-  ever; SVGs with embedded `<script>` are rejected. Downloads are always
-  `attachment` + `nosniff`.
+- Uploads are capped (`MAX_FILE_SIZE_MB`, default 10MB). Every file type
+  is accepted. Downloads are always `attachment` + `nosniff`.
 - Structured logs carry ids, sizes, and reasons — never file contents, tokens,
   or secrets.
 
