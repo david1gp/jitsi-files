@@ -13,7 +13,6 @@ import {
 } from "./crypto.js"
 import { type FileIndex, type FileRow } from "./db.js"
 import { type BlobStore } from "./storage.js"
-import { validateUpload } from "./validation.js"
 
 export interface AppContext {
   config: Config
@@ -156,14 +155,6 @@ export async function createApp(ctx: AppContext) {
       log("upload.rejected", { sessionId, fileId, reason: "too large", size: bytes.length })
       return c.json({ error: { code: "files.too-large", maxBytes: maxFileSizeBytes(config) } }, { status: 413 })
     }
-    const checked = validateUpload(clientName, filePart.type, bytes, {
-      allowAllFileTypes: config.ALLOW_ALL_FILE_TYPES,
-    })
-    if (!checked.ok) {
-      log("upload.rejected", { sessionId, fileId, reason: checked.reason, fileName: clientName })
-      return c.json({ error: { code: "files.disallowed-type", reason: checked.reason } }, { status: 415 })
-    }
-
     // Global storage quota: total bytes across ALL sessions (not per-session).
     // Checked before the blob is stored, so rejected uploads leave no orphan.
     // Residual race: two concurrent uploads can both pass the check before

@@ -56,13 +56,6 @@ const ConfigSchema = v.object({
   // --- Limits ---
   MAX_FILE_SIZE_MB: NumFromEnv(10),
   /**
-   * When true, accept every upload file type (skip extension allowlist,
-   * blocked extensions, executable magic-byte and markup/script checks).
-   * Staff-only deployments may enable this; default false (responsible
-   * default for other self-hosters).
-   */
-  ALLOW_ALL_FILE_TYPES: BoolFromEnv,
-  /**
    * Global storage quota in gigabytes (fractional values allowed, so tests
    * can set a tiny quota). 0 or unset = unlimited (public default).
    * Uploads that would push total stored bytes (all sessions) over the
@@ -105,7 +98,6 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     S3_PREFIX: env["S3_PREFIX"],
     PRESIGNED_URL_TTL_SECONDS: env["PRESIGNED_URL_TTL_SECONDS"],
     MAX_FILE_SIZE_MB: env["MAX_FILE_SIZE_MB"],
-    ALLOW_ALL_FILE_TYPES: env["ALLOW_ALL_FILE_TYPES"],
     MAX_TOTAL_STORAGE_GB: env["MAX_TOTAL_STORAGE_GB"],
     FILE_TTL_HOURS: env["FILE_TTL_HOURS"],
     SWEEP_INTERVAL_MINUTES: env["SWEEP_INTERVAL_MINUTES"],
